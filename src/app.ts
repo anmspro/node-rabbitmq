@@ -1,6 +1,6 @@
 import * as amqp from "amqplib";
 
-const queueName = "my-queue";
+const queueName = "message-queue";
 const numMessagesToFetch = 1000;
 
 async function consumeMessages() {
@@ -18,17 +18,15 @@ async function consumeMessages() {
         console.log(`Received message: ${message.content.toString()}`);
         messagesReceived++;
 
-        // Acknowledge the message to remove it from the queue
         channel.ack(message);
 
-        // Check if we have received the desired number of messages
         if (messagesReceived === numMessagesToFetch) {
           console.log(`Received ${numMessagesToFetch} messages. Exiting...`);
           connection.close();
         }
       }
     },
-    { noAck: false } // Ensure that messages are not automatically acknowledged
+    { noAck: false }
   );
 }
 
