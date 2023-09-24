@@ -1,33 +1,71 @@
 import * as amqp from "amqplib";
+// import * as admin from "firebase-admin";
 
 const queueName = "message-queue";
-const numMessagesToFetch = 1000;
+const batchSize = 1000;
 
-async function consumeMessages() {
-  const connection = await amqp.connect("amqp://localhost");
-  const channel = await connection.createChannel();
+// admin.initializeApp({
+//   credential: admin.credential.applicationDefault(),
+// });
 
-  await channel.assertQueue(queueName, { durable: false });
+const processMessages = async (queueName: string, batchSize: number) => {
+  try {
+    const connection = await amqp.connect("amqp://root:root@localhost");
+    const channel = await connection.createChannel();
 
-  let messagesReceived = 0;
+    await channel.assertQueue(queueName, { durable: false });
 
-  channel.consume(
-    queueName,
-    (message) => {
-      if (message !== null) {
-        console.log(`Received message: ${message.content.toString()}`);
-        messagesReceived++;
+    while (true) {
+      const messagesBatch = [];
+      for (let i = 0; i < batchSize; i++) {
+        const message = await channel.get(queueName, { noAck: false });
+        console.log("iteration: ", i, " = ", message);
+        if (!message) {
+          break;
+        }
+        messagesBatch.push(message);
+      }
+
+      if (messagesBatch.length === 0) {
+        break;
+      }
+
+      for (const message of messagesBatch) {
+        const messageData = JSON.parse(message.content.toString());
+        console.log(messageData);
+        // await sendToFCM(messageData);
 
         channel.ack(message);
-
-        if (messagesReceived === numMessagesToFetch) {
-          console.log(`Received ${numMessagesToFetch} messages. Exiting...`);
-          connection.close();
-        }
       }
-    },
-    { noAck: false }
-  );
-}
+    }
+    connection.close();
+  } catch (error) {
+    console.log(
+      "❌ ~ file: rabbitmq.js ~ processMessages ~ error:",
+      (error as Error).message
+    );
+    throw error;
+  }
+};
 
-consumeMessages().catch(console.error);
+processMessages(queueName, batchSize);
+
+// async function sendToFCM(messageData: any) {
+//   try {
+//     const registrationToken = messageData.registrationToken;
+//     const payload = {
+//       notification: {
+//         title: messageData.title,
+//         body: messageData.body,
+//       },
+//     };
+
+//     const response = await admin
+//       .messaging()
+//       .sendToDevice(registrationToken, payload);
+
+//     console.log("FCM Response:", response);
+//   } catch (error) {
+//     console.error("Error sending message to FCM:", error);
+//   }
+// }

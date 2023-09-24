@@ -12,7 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "amqplib": "^0.10.3"
+    "amqplib": "^0.10.3",
+    "firebase-admin": "^11.10.1"
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.2",

@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+      "types": ["node"],
       "target": "ES6",
       "module": "CommonJS",
       "outDir": "./dist",
