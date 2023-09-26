@@ -2,16 +2,22 @@ import { Request, Response } from "express";
 import * as amqp from "amqplib";
 import * as admin from "firebase-admin";
 
-const pushQueue = "push-campaign";
+const producerQueue = "push-campaign";
 const consumerQueue = "message-queue";
 
-const batchSize = 1000;
+let batchSize = 1000;
 
 admin.initializeApp({
-  credential: admin.credential.applicationDefault(),
+  credential: admin.credential.cert({
+    projectId: "binge-mobile",
+    clientEmail: "firebase-adminsdk-uzr71@binge-mobile.iam.gserviceaccount.com",
+    privateKey:
+      "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCJjNENWqXuPjyn\n+Mwao7tzCtyYAXmtp35TPKp4pkIbShHSLGuSgi4O+H2Dy/mdrkKsiUiCGu6WHUxk\nWLSg//rwlGhyaXZ2ztcDGYgPcVGq94wNB4v6mqxcRoGWTdWK+kUbimWygT6miX2m\nbgAcL7GixPoVHo8bVyYVfnMdylspGVqtqMQU70DcMxlvzdJ7jbqiuuBAhla+XYXb\nXZPZj6MbA9m4eIonNMugpR1XbXkLncknp83JCFO9XttSlFsiH/jhjqtVGOOcESVW\nkEDTpiHKKG94Ga4wWms52L3dreasqdkUq8h+YBDf/PvnMZkkFCpHDjjV77yMG2Qf\nogiroUElAgMBAAECggEAEeBszQ0Ccr/A9120/SNZed6oA9NxQnn5x4yjZTHKdqx+\nO3ANfQmRPd3axjXM18rtnGntNAeXCYh+RK5or2IFdZ38Ix6EyHUiaaM4VTV3lT4+\nA/V+ok/W5dk9/1BXWAwlzioDBJuajl9hJq+2MPOb5RkvnW4O0FFXwERiZrVFesZB\ngicGj1eegZ0bdjRD7c0QIrBBkwVEE/yvX5EDzIH3S2QsqWyIqM0yYauXxOPruB67\n3Q2Ey+CFO5OpyoGSKlsbej89WReHkFd5tK66h6ePz5SbogE3QEYuK26Vu59Shiky\nAc9W62w1UgLgOIk1IZv3RqyigySbmC39BkWMdOL1cwKBgQC//A3k7A+cNazAXQo9\nw1DiHiZWy+s/WQq4Y9AfIi/YeJvRkNNGES6yAezNBkYSYDNJU/iui+YoJ6chR9KL\nzpCySxZEHHFPH7ZYBc1zdm3yELjwzT5bDYOICXvQRh40qDdSKXlFIXyDrTSoroCb\ngaUaStFKqBaTJ+GF4joma4sF0wKBgQC3ajECSKb2aQMjIP0S2MIdbZ7xgA/XDccy\noI1PR/rD2JkNHHGkhmBpgyEqRFRUxSkCIAOktF7GP7da4V/aW+wIaCIBSs/ddwx1\n0YG9d9icMPwastN49infhMwKEEstyZtK6YipPYG+JxHlBk4WVLERf7g6gyxJ7up4\nPOCryo5qJwKBgQCuLr1caWBwVbJ6hO95we9sd/ZI4ZJ6UwsK6GQ3GwlV2Xdl14QY\nGhbHoj96dKq2mVluuiTyGDOlUvSrmUJJXgyh9sYo3bVgGGGT0w/oJhbyfIGO2Ggu\nrEAd+JzBBhz5oXUvsjk4o30Y6tjQAiLk8+cbx63DkmWI9bIDipE/smrbyQKBgQCD\ndfRsm6A4Cyp5ekKJyJzRNOnwVIaF8FUvH05JXeEJkGyariFx9/KQjbEut0zueWYc\nJNAXtEQdujt0QwdN3ga+O8zrujBknthqdeCU6Zpy0NVRWY0jLOT0VR1dtTH9Pnw0\n5E/UZcZhgWVdDvjXHprPXQixv6T11O1vgsrRttv+jwKBgDnfj5RPMjG/q9Kvg3Vh\npjAbK51tzeVuaTRsL8IdES/uJhGXuYJlwCZfhk9mTQ1lPVZZrTUUH4zkPqvptM9M\n6DCmsirJyMETQ+DlSUyc99b+uAs6z1urhbzOaRd84QZaSdNDl9QHQ+CQysbdPC9Q\nschj4qd+IQ4wwoRe2fxo+SWR\n-----END PRIVATE KEY-----\n",
+  }),
+  databaseURL: "https://binge-mobile.firebaseio.com",
 });
 
-export async function sendMessages(
+export async function Producer(
   req: Request,
   res: Response
 ): Promise<void | Response<any, Record<string, any>>> {
@@ -25,10 +31,10 @@ export async function sendMessages(
 
     const connection = await amqp.connect("amqp://root:root@localhost");
     const channel = await connection.createChannel();
-    await channel.assertQueue(pushQueue, { durable: false });
+    await channel.assertQueue(producerQueue, { durable: false });
 
     let startTime = Date.now();
-    const timeToSend = new Date("2023-09-26T15:00:00");
+    const timeToSend = new Date("2023-09-29T15:00:00");
     const messageTTL = timeToSend.getTime() - Date.now();
     console.log(messageTTL);
     for (let i = 0; i < numMessages; i++) {
@@ -43,12 +49,12 @@ export async function sendMessages(
       };
 
       channel.sendToQueue(
-        pushQueue,
+        producerQueue,
         Buffer.from(JSON.stringify(dummyMessage)),
         messageProperties
       );
 
-      //   channel.sendToQueue(pushQueue, Buffer.from(JSON.stringify(dummyMessage)));
+      //   channel.sendToQueue(producerQueue, Buffer.from(JSON.stringify(dummyMessage)));
     }
     let endTime = Date.now();
     let elapsedSeconds = (endTime - startTime) / 1000;
@@ -65,7 +71,7 @@ export async function sendMessages(
   }
 }
 
-export async function getMessages(
+export async function Consumer(
   req: Request,
   res: Response
 ): Promise<void | Response<any, Record<string, any>>> {
@@ -79,16 +85,17 @@ export async function getMessages(
 
     const connection = await amqp.connect("amqp://root:root@localhost");
     const channel = await connection.createChannel();
-    await channel.assertQueue(pushQueue, { durable: false });
+    await channel.assertQueue(producerQueue, { durable: false });
 
     let totalMsg = numMessages;
     let batchNum = 0;
     while (totalMsg > 0) {
+      if (totalMsg < batchSize) batchSize = totalMsg;
       ++batchNum;
       let startTime = Date.now();
       console.log("Batch: ", batchNum, " - Total: ", totalMsg);
       for (let i = 0; i < batchSize; i++) {
-        const message = await channel.get(pushQueue, { noAck: false });
+        const message = await channel.get(producerQueue, { noAck: false });
         // console.log("Batch: ", batchNum, " - iteration: ", i);
         if (!message) {
           break;
@@ -114,7 +121,18 @@ export async function getMessages(
 
 export async function sendToFCM(messageData: any) {
   try {
-    const registrationToken = messageData.registrationToken;
+    // const registrationToken = messageData.registrationToken;
+    let tokens = [
+      "fNBKF44MRCiZrkzHCt6v5K:APA91bHcNgSvmqMbZQ-dHkiq8b3h8YTU9tW_xKywF847ZuwdPUBJQALBHAUhmqxz1XJgRNZfMBSoljrJFG657A567pv2nOYJtRnhsxj0KzJamZ4-DvHy0Eqf7QLkjdKI_oIxchYgpT6w",
+      "eH4CtlDfS36-vDQILBw45D:APA91bEfgMYWmWe_zeP2H3GNtNOtwsHqYmtW5Z0pIpdeF1T4In_kmw2EHVdoV-YPLgYlaXTMtRpz6OZ97BtArnKUfZDreaCbBQkvK3YZlcx-FVPODMKFR8VkKEwe7httyGIYw6ilkMQz",
+    ];
+    const registrationToken = tokens[1];
+
+    if (!registrationToken) {
+      console.error("Error: registrationToken is missing or empty.");
+      return;
+    }
+
     const notification = {
       title: messageData.title,
       body: messageData.body,
@@ -128,7 +146,14 @@ export async function sendToFCM(messageData: any) {
     });
 
     console.log("FCM Response:", response);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error sending message to FCM:", error);
+    // if (error.code === "messaging/registration-token-not-registered") {
+    //   console.error(
+    //     "Error: The registration token is not registered or is invalid."
+    //   );
+    // } else {
+    //   console.error("Error sending message to FCM:", error);
+    // }
   }
 }

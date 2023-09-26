@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { getMessages, sendMessages } from "../controllers/messageController";
+import { Consumer, Producer } from "../controllers/messageController";
 
 const router = Router();
 
-router.post("/sendMessages", sendMessages);
-router.post("/getMessages", getMessages);
+router.post("/sendMessages", Producer);
+router.post("/getMessages", Consumer);
 
 export default router;
