@@ -5,7 +5,8 @@
       "module": "CommonJS",
       "outDir": "./dist",
       "rootDir": "./src",
-      "strict": true
+      "strict": true,
+      "esModuleInterop": true
     }
 }
   
