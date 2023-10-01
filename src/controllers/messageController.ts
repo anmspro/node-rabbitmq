@@ -3,7 +3,7 @@ import * as amqp from "amqplib";
 import * as admin from "firebase-admin";
 
 const producerQueue = "push-campaign";
-const consumerQueue = "message-queue";
+const consumerQueue = "push-campaign";
 
 let batchSize = 1000;
 
@@ -34,15 +34,15 @@ export async function Producer(
     await channel.assertQueue(producerQueue, { durable: false });
 
     let startTime = Date.now();
-    const timeToSend = new Date("2023-09-29T15:00:00");
+    const timeToSend = new Date("2024-10-15T12:38:00");
     const messageTTL = timeToSend.getTime() - Date.now();
-    console.log(messageTTL);
+    // console.log(messageTTL);
     for (let i = 0; i < numMessages; i++) {
       const dummyMessage = {
         title: `Message ${i}`,
         body: `This is message number ${i}`,
         image: "1",
-        url: `www.image-${i}.com`,
+        url: `https://i.ibb.co/9wrLHhZ/reddot-logo.jpg`,
       };
       const messageProperties = {
         expiration: messageTTL.toString(),
@@ -85,7 +85,7 @@ export async function Consumer(
 
     const connection = await amqp.connect("amqp://root:root@localhost");
     const channel = await connection.createChannel();
-    await channel.assertQueue(producerQueue, { durable: false });
+    await channel.assertQueue(consumerQueue, { durable: false });
 
     let totalMsg = numMessages;
     let batchNum = 0;
@@ -95,13 +95,13 @@ export async function Consumer(
       let startTime = Date.now();
       console.log("Batch: ", batchNum, " - Total: ", totalMsg);
       for (let i = 0; i < batchSize; i++) {
-        const message = await channel.get(producerQueue, { noAck: false });
+        const message = await channel.get(consumerQueue, { noAck: false });
         // console.log("Batch: ", batchNum, " - iteration: ", i);
         if (!message) {
           break;
         }
         const messageData = JSON.parse(message.content.toString());
-        // console.log(messageData);
+        console.log(messageData);
         await sendToFCM(messageData);
         channel.ack(message);
       }
@@ -112,9 +112,9 @@ export async function Consumer(
     }
     return res
       .status(200)
-      .json({ message: `Get ${numMessages} dummy messages to RabbitMQ.` });
+      .json({ message: `Get ${numMessages} dummy messages from RabbitMQ.` });
   } catch (error) {
-    console.error("Error getting dummy messages to RabbitMQ:", error);
+    console.error("Error getting dummy messages from RabbitMQ:", error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 }
@@ -125,8 +125,9 @@ export async function sendToFCM(messageData: any) {
     let tokens = [
       "fNBKF44MRCiZrkzHCt6v5K:APA91bHcNgSvmqMbZQ-dHkiq8b3h8YTU9tW_xKywF847ZuwdPUBJQALBHAUhmqxz1XJgRNZfMBSoljrJFG657A567pv2nOYJtRnhsxj0KzJamZ4-DvHy0Eqf7QLkjdKI_oIxchYgpT6w",
       "eH4CtlDfS36-vDQILBw45D:APA91bEfgMYWmWe_zeP2H3GNtNOtwsHqYmtW5Z0pIpdeF1T4In_kmw2EHVdoV-YPLgYlaXTMtRpz6OZ97BtArnKUfZDreaCbBQkvK3YZlcx-FVPODMKFR8VkKEwe7httyGIYw6ilkMQz",
+      "ey_QvrmVRNqZP_ifhz9ogA:APA91bH8M9Yakx_NaP23fRFjwqVpsgFCGjygHzFDLHB0rQplPG_sjuf57UpgNVYgarHUkKhS6wENmEdAOGPpPLm4aHy3NMgzmo6_PqO-UqjcSCZAL9IjuYHIdXWT7S7eD6AgQc1HLzKU",
     ];
-    const registrationToken = tokens[1];
+    const registrationToken = tokens[2];
 
     if (!registrationToken) {
       console.error("Error: registrationToken is missing or empty.");
