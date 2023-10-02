@@ -1,6 +1,14 @@
 import { Request, Response } from "express";
 import * as amqp from "amqplib";
 import * as admin from "firebase-admin";
+import mysql from "mysql2/promise";
+
+const dbConfig = {
+  host: "127.0.0.1",
+  user: "root",
+  password: "",
+  database: "binge.v2",
+};
 
 const producerQueue = "push-campaign";
 const consumerQueue = "push-campaign";
@@ -16,6 +24,30 @@ admin.initializeApp({
   }),
   databaseURL: "https://binge-mobile.firebaseio.com",
 });
+
+async function fetchPushNotifications(channel: any) {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+
+    const [rows] = await connection.query("SELECT * FROM push_notifications");
+
+    Object.values(rows).forEach((value) => {
+      // console.log(value);
+      // const pushNotification = {
+      //   id: value.id,
+      //   title: row.title,
+      //   body: row.body,
+      //   image_url: row.image_url,
+      // };
+
+      channel.sendToQueue(producerQueue, Buffer.from(JSON.stringify(value)));
+    });
+
+    await connection.end();
+  } catch (error) {
+    console.error("Error fetching push_notifications:", error);
+  }
+}
 
 export async function Producer(
   req: Request,
@@ -34,28 +66,32 @@ export async function Producer(
     await channel.assertQueue(producerQueue, { durable: false });
 
     let startTime = Date.now();
-    const timeToSend = new Date("2024-10-15T12:38:00");
+    const timeToSend = new Date("2024-10-01T17:13:00");
     const messageTTL = timeToSend.getTime() - Date.now();
     // console.log(messageTTL);
-    for (let i = 0; i < numMessages; i++) {
-      const dummyMessage = {
-        title: `Message ${i}`,
-        body: `This is message number ${i}`,
-        image: "1",
-        url: `https://i.ibb.co/9wrLHhZ/reddot-logo.jpg`,
-      };
-      const messageProperties = {
-        expiration: messageTTL.toString(),
-      };
+    // for (let i = 0; i < numMessages; i++) {
+    //   const dummyMessage = {
+    //     title: `Message ${i}`,
+    //     body: `This is message number ${i}`,
+    //     image: "1",
+    //     url: `https://i.ibb.co/9wrLHhZ/reddot-logo.jpg`,
+    //   };
 
-      channel.sendToQueue(
-        producerQueue,
-        Buffer.from(JSON.stringify(dummyMessage)),
-        messageProperties
-      );
+    //   // todo: send all push id from db
+    //   // const dummyMessage = { pushId: `${i}` };
+    //   const messageProperties = {
+    //     expiration: messageTTL.toString(),
+    //   };
 
-      //   channel.sendToQueue(producerQueue, Buffer.from(JSON.stringify(dummyMessage)));
-    }
+    //   channel.sendToQueue(
+    //     producerQueue,
+    //     Buffer.from(JSON.stringify(dummyMessage)),
+    //     messageProperties
+    //   );
+    // }
+
+    await fetchPushNotifications(channel);
+
     let endTime = Date.now();
     let elapsedSeconds = (endTime - startTime) / 1000;
     console.log(
@@ -96,7 +132,7 @@ export async function Consumer(
       console.log("Batch: ", batchNum, " - Total: ", totalMsg);
       for (let i = 0; i < batchSize; i++) {
         const message = await channel.get(consumerQueue, { noAck: false });
-        // console.log("Batch: ", batchNum, " - iteration: ", i);
+        console.log("Batch: ", batchNum, " - iteration: ", i);
         if (!message) {
           break;
         }
@@ -125,7 +161,7 @@ export async function sendToFCM(messageData: any) {
     let tokens = [
       "fNBKF44MRCiZrkzHCt6v5K:APA91bHcNgSvmqMbZQ-dHkiq8b3h8YTU9tW_xKywF847ZuwdPUBJQALBHAUhmqxz1XJgRNZfMBSoljrJFG657A567pv2nOYJtRnhsxj0KzJamZ4-DvHy0Eqf7QLkjdKI_oIxchYgpT6w",
       "eH4CtlDfS36-vDQILBw45D:APA91bEfgMYWmWe_zeP2H3GNtNOtwsHqYmtW5Z0pIpdeF1T4In_kmw2EHVdoV-YPLgYlaXTMtRpz6OZ97BtArnKUfZDreaCbBQkvK3YZlcx-FVPODMKFR8VkKEwe7httyGIYw6ilkMQz",
-      "ey_QvrmVRNqZP_ifhz9ogA:APA91bH8M9Yakx_NaP23fRFjwqVpsgFCGjygHzFDLHB0rQplPG_sjuf57UpgNVYgarHUkKhS6wENmEdAOGPpPLm4aHy3NMgzmo6_PqO-UqjcSCZAL9IjuYHIdXWT7S7eD6AgQc1HLzKU",
+      "eFgG41JeSBi0sQUOxTqgYO:APA91bFaEb3s4ykQMSqccMQxExhqlFBm9eAVJmytkNHPkRtwwY2mVzsu-PlKgHx-9i01Y6Nl5cLvBRr2Ys3iOAgsqBZGd6URBFqpi5kD7XZ6lq9pUDv3OgMD1fXvgaRpyf2g-l2lNtJ_",
     ];
     const registrationToken = tokens[2];
 
@@ -137,8 +173,7 @@ export async function sendToFCM(messageData: any) {
     const notification = {
       title: messageData.title,
       body: messageData.body,
-      image: messageData.image,
-      url: messageData.url,
+      image_url: messageData.image_url,
     };
 
     const response = await admin.messaging().send({
@@ -149,12 +184,5 @@ export async function sendToFCM(messageData: any) {
     console.log("FCM Response:", response);
   } catch (error: any) {
     console.error("Error sending message to FCM:", error);
-    // if (error.code === "messaging/registration-token-not-registered") {
-    //   console.error(
-    //     "Error: The registration token is not registered or is invalid."
-    //   );
-    // } else {
-    //   console.error("Error sending message to FCM:", error);
-    // }
   }
 }
