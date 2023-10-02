@@ -66,8 +66,8 @@ export async function Producer(
     await channel.assertQueue(producerQueue, { durable: false });
 
     let startTime = Date.now();
-    const timeToSend = new Date("2024-10-01T17:13:00");
-    const messageTTL = timeToSend.getTime() - Date.now();
+    // const timeToSend = new Date("2024-10-01T17:13:00");
+    // const messageTTL = timeToSend.getTime() - Date.now();
     // console.log(messageTTL);
     // for (let i = 0; i < numMessages; i++) {
     //   const dummyMessage = {
@@ -77,8 +77,6 @@ export async function Producer(
     //     url: `https://i.ibb.co/9wrLHhZ/reddot-logo.jpg`,
     //   };
 
-    //   // todo: send all push id from db
-    //   // const dummyMessage = { pushId: `${i}` };
     //   const messageProperties = {
     //     expiration: messageTTL.toString(),
     //   };
@@ -157,7 +155,6 @@ export async function Consumer(
 
 export async function sendToFCM(messageData: any) {
   try {
-    // const registrationToken = messageData.registrationToken;
     let tokens = [
       "fNBKF44MRCiZrkzHCt6v5K:APA91bHcNgSvmqMbZQ-dHkiq8b3h8YTU9tW_xKywF847ZuwdPUBJQALBHAUhmqxz1XJgRNZfMBSoljrJFG657A567pv2nOYJtRnhsxj0KzJamZ4-DvHy0Eqf7QLkjdKI_oIxchYgpT6w",
       "eH4CtlDfS36-vDQILBw45D:APA91bEfgMYWmWe_zeP2H3GNtNOtwsHqYmtW5Z0pIpdeF1T4In_kmw2EHVdoV-YPLgYlaXTMtRpz6OZ97BtArnKUfZDreaCbBQkvK3YZlcx-FVPODMKFR8VkKEwe7httyGIYw6ilkMQz",
