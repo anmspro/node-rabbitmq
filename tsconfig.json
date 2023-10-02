@@ -1,15 +1,18 @@
 {
-    "compilerOptions": {
-      "types": ["node"],
-      "target": "ES6",
-      "module": "CommonJS",
-      "outDir": "./dist",
-      "rootDir": "./src",
-      "strict": true,
-      "esModuleInterop": true,
-      "lib": [
-        "es5", "es6", "dom", "dom.iterable"
+  "compilerOptions": {
+    "types": ["node"],
+    "target": "ES6",
+    "module": "CommonJS",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "lib": [
+      "es5", "es6", "dom", "dom.iterable"
     ]
-    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"]
 }
+
   

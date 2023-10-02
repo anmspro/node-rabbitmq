@@ -7,6 +7,8 @@ import {
 } from "../services/rabbitMQService";
 import { fetchPushNotifications } from "../services/mysqlService";
 import { sendNotificationToFCM } from "../services/fcmService";
+import * as redis from "redis";
+import { promisify } from "util";
 
 export async function Producer(req: Request, res: Response) {
   try {
@@ -17,9 +19,9 @@ export async function Producer(req: Request, res: Response) {
       return res.status(400).json({ error: "Invalid input" });
     }
 
-    let startTime = Date.now();
     const channel = await createRabbitMQConnection();
     const pushNotifications = await fetchPushNotifications();
+    let startTime = Date.now();
 
     Object.values(pushNotifications).forEach((value) => {
       sendMessageToQueue(channel, value);
@@ -69,7 +71,8 @@ export async function Consumer(req: Request, res: Response) {
         const registrationToken =
           "eFgG41JeSBi0sQUOxTqgYO:APA91bFaEb3s4ykQMSqccMQxExhqlFBm9eAVJmytkNHPkRtwwY2mVzsu-PlKgHx-9i01Y6Nl5cLvBRr2Ys3iOAgsqBZGd6URBFqpi5kD7XZ6lq9pUDv3OgMD1fXvgaRpyf2g-l2lNtJ_";
         console.log(messageData);
-        await sendNotificationToFCM(messageData, registrationToken);
+        sendMessagesToAllTokens(messageData);
+        // await sendNotificationToFCM(messageData, registrationToken);
         acknowledgeMessage(channel, message);
       }
       let endTime = Date.now();
@@ -84,4 +87,81 @@ export async function Consumer(req: Request, res: Response) {
     console.error("Error getting dummy messages from RabbitMQ:", error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
+}
+
+interface CustomRedisClientOptions {
+  host: string;
+  port: number;
+  password: string;
+}
+
+const redisClient = redis.createClient({
+  host: "127.0.0.1",
+  port: 6379,
+  password: "",
+  legacyMode: true,
+} as CustomRedisClientOptions);
+
+redisClient.on("connect", () => {
+  console.log("Connected to Redis12345");
+});
+
+redisClient.on("error", (err) => {
+  console.log(err.message);
+});
+
+redisClient.on("ready", () => {
+  console.log("Redis is ready");
+});
+
+redisClient.on("end", () => {
+  console.log("Redis connection ended");
+});
+
+process.on("SIGINT", () => {
+  redisClient.quit();
+});
+
+redisClient
+  .connect()
+  .then(() => {
+    console.log("Connected to Redis");
+  })
+  .catch((err) => {
+    console.log(err.message);
+  });
+
+const redisGet = promisify(redisClient.get).bind(redisClient);
+
+async function sendNotificationToToken(
+  messageData: any,
+  registrationToken: string
+) {
+  try {
+    console.log(`Sending message to token: ${registrationToken}`);
+    await sendNotificationToFCM(messageData, registrationToken);
+  } catch (error) {
+    console.error(
+      `Error sending message to token: ${registrationToken}`,
+      error
+    );
+  }
+}
+
+async function sendMessagesToAllTokens(messageData: any) {
+  console.log("entered sendMessagesToAllTokens");
+  const tokens = await redisGet("web-staging:tokenStorage");
+
+  console.log(tokens);
+
+  if (!tokens || tokens.length === 0) {
+    console.log("No tokens found in Redis.");
+    return;
+  }
+
+  // for (const registrationToken of JSON.parse(tokens)) {
+  //   await sendNotificationToToken(messageData, registrationToken);
+  // }
+
+  console.log("All messages sent.");
 }
