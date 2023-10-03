@@ -7,8 +7,7 @@ import {
 } from "../services/rabbitMQService";
 import { fetchPushNotifications } from "../services/mysqlService";
 import { sendNotificationToFCM } from "../services/fcmService";
-import * as redis from "redis";
-import { promisify } from "util";
+import { Redis } from "ioredis";
 
 export async function Producer(req: Request, res: Response) {
   try {
@@ -20,27 +19,56 @@ export async function Producer(req: Request, res: Response) {
     }
 
     const channel = await createRabbitMQConnection();
+
+    // Fetch push notifications from db
     const pushNotifications = await fetchPushNotifications();
+
+    // Fetch tokens from redis
+    const redisTokens = await redisClient.smembers("web-staging:token-storage");
+    const tokens = JSON.parse(redisTokens[1]);
+
+    if (!tokens || tokens.length === 0) {
+      console.log("No tokens found in Redis.");
+      return;
+    }
+
+    // design the push notification
+    const pushesToSend: any = [];
+    for (const token of tokens) {
+      Object.values(pushNotifications).forEach((value) => {
+        pushesToSend.push({ p_id: value.p_id, token });
+      });
+    }
+
     let startTime = Date.now();
 
-    Object.values(pushNotifications).forEach((value) => {
-      sendMessageToQueue(channel, value);
+    pushesToSend.forEach((push: any) => {
+      sendMessageToQueue(channel, push);
     });
 
     let endTime = Date.now();
     let elapsedSeconds = (endTime - startTime) / 1000;
     console.log(
-      `Elapsed time for sending ${numMessages} messages: ${elapsedSeconds} seconds`
+      `Elapsed time for sending ${pushesToSend.length} messages: ${elapsedSeconds} seconds`
     );
 
     return res
       .status(200)
-      .json({ message: `Sent ${numMessages} dummy messages to RabbitMQ.` });
+      .json({ message: `Sent ${pushesToSend.length} messages to RabbitMQ.` });
   } catch (error) {
-    console.error("Error sending dummy messages to RabbitMQ:", error);
+    console.error("Error sending messages to RabbitMQ:", error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 }
+
+const pushes: any = {};
+
+// todo: store pushes in array (dp)
+// const pushes = [];
+// pushes[1] = {title: "asdfasdf", image: "asdfasdf.png"}
+// if (pushes[1]) {sendpush using this data}
+// or fetch push 1 first
+// book keeping
 
 export async function Consumer(req: Request, res: Response) {
   try {
@@ -95,7 +123,7 @@ interface CustomRedisClientOptions {
   password: string;
 }
 
-const redisClient = redis.createClient({
+const redisClient = new Redis({
   host: "127.0.0.1",
   port: 6379,
   password: "",
@@ -118,20 +146,15 @@ redisClient.on("end", () => {
   console.log("Redis connection ended");
 });
 
-process.on("SIGINT", () => {
-  redisClient.quit();
+async function CloseRedisClient() {
+  await redisClient.quit();
+  console.log("Redis client has been closed.");
+}
+
+process.on("SIGINT", async () => {
+  await CloseRedisClient();
+  process.exit(0);
 });
-
-redisClient
-  .connect()
-  .then(() => {
-    console.log("Connected to Redis");
-  })
-  .catch((err) => {
-    console.log(err.message);
-  });
-
-const redisGet = promisify(redisClient.get).bind(redisClient);
 
 async function sendNotificationToToken(
   messageData: any,
@@ -150,18 +173,19 @@ async function sendNotificationToToken(
 
 async function sendMessagesToAllTokens(messageData: any) {
   console.log("entered sendMessagesToAllTokens");
-  const tokens = await redisGet("web-staging:tokenStorage");
-
-  console.log(tokens);
+  const redisTokens = await redisClient.smembers("web-staging:token-storage");
+  const tokens = JSON.parse(redisTokens[1]);
 
   if (!tokens || tokens.length === 0) {
     console.log("No tokens found in Redis.");
     return;
   }
 
-  // for (const registrationToken of JSON.parse(tokens)) {
-  //   await sendNotificationToToken(messageData, registrationToken);
-  // }
+  for (const token of tokens) {
+    console.log("Token:", token);
+  }
+
+  // await sendNotificationToToken(messageData, token);
 
   console.log("All messages sent.");
 }

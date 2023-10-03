@@ -5,7 +5,9 @@ import dbConfig from "../config/dbConfig";
 export async function fetchPushNotifications() {
   try {
     const connection = await mysql.createConnection(dbConfig);
-    const [rows] = await connection.query("SELECT * FROM push_notifications");
+    const [rows] = await connection.query(
+      "SELECT id AS p_id FROM push_notifications"
+    );
     await connection.end();
     return rows;
   } catch (error) {
