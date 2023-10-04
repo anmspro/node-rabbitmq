@@ -6,7 +6,7 @@ export async function createRabbitMQConnection() {
   try {
     const connection = await amqp.connect(rabbitMQConfig.connectionString);
     const channel = await connection.createChannel();
-    await channel.assertQueue(rabbitMQConfig.producerQueue, { durable: false });
+    await channel.assertQueue(rabbitMQConfig.producerQueue, { durable: true });
     return channel;
   } catch (error) {
     console.error("Error creating RabbitMQ connection:", error);
@@ -18,7 +18,10 @@ export async function sendMessageToQueue(channel: any, message: string) {
   try {
     channel.sendToQueue(
       rabbitMQConfig.producerQueue,
-      Buffer.from(JSON.stringify(message))
+      Buffer.from(JSON.stringify(message)),
+      {
+        persistent: true,
+      }
     );
   } catch (error) {
     console.error("Error sending message to RabbitMQ:", error);

@@ -9,10 +9,11 @@ import { fetchPushNotifications } from "../services/mysqlService";
 import { sendNotificationToFCM } from "../services/fcmService";
 import { Redis } from "ioredis";
 
+const pushes: any = {};
+
 export async function Producer(req: Request, res: Response) {
   try {
     const numMessages: number = req.body.numMessages;
-    console.log(numMessages);
 
     if (!numMessages || typeof numMessages !== "number" || numMessages <= 0) {
       return res.status(400).json({ error: "Invalid input" });
@@ -36,7 +37,18 @@ export async function Producer(req: Request, res: Response) {
     const pushesToSend: any = [];
     for (const token of tokens) {
       Object.values(pushNotifications).forEach((value) => {
-        pushesToSend.push({ p_id: value.p_id, token });
+        pushesToSend.push({ p_id: value.id, token });
+        pushes[value.id] = {
+          notification_type_id: value.notification_type_id.toString(),
+          click_action: value.click_action,
+          device_type: value.device_type,
+          content_type: value.content_type,
+          content_id: value.content_id.toString(),
+          priority: value.priority,
+          title: value.title,
+          body: value.body,
+          image_url: value.image_url,
+        };
       });
     }
 
@@ -60,8 +72,6 @@ export async function Producer(req: Request, res: Response) {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 }
-
-const pushes: any = {};
 
 // todo: store pushes in array (dp)
 // const pushes = [];
@@ -96,11 +106,13 @@ export async function Consumer(req: Request, res: Response) {
           break;
         }
         const messageData = JSON.parse(message.content.toString());
-        const registrationToken =
-          "eFgG41JeSBi0sQUOxTqgYO:APA91bFaEb3s4ykQMSqccMQxExhqlFBm9eAVJmytkNHPkRtwwY2mVzsu-PlKgHx-9i01Y6Nl5cLvBRr2Ys3iOAgsqBZGd6URBFqpi5kD7XZ6lq9pUDv3OgMD1fXvgaRpyf2g-l2lNtJ_";
-        console.log(messageData);
-        sendMessagesToAllTokens(messageData);
-        // await sendNotificationToFCM(messageData, registrationToken);
+        if (pushes[messageData.p_id]) {
+          console.log("message data before sending to fcm: ", messageData);
+          await sendNotificationToFCM(
+            pushes[messageData.p_id],
+            messageData.token
+          );
+        }
         acknowledgeMessage(channel, message);
       }
       let endTime = Date.now();
@@ -112,7 +124,7 @@ export async function Consumer(req: Request, res: Response) {
       message: `Received ${numMessages} dummy messages from RabbitMQ.`,
     });
   } catch (error) {
-    console.error("Error getting dummy messages from RabbitMQ:", error);
+    console.error("Error getting messages from RabbitMQ:", error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 }
