@@ -5,7 +5,10 @@ import {
   acknowledgeMessage,
   sendMessageToQueue,
 } from "../services/rabbitMQService";
-import { fetchPushNotifications } from "../services/mysqlService";
+import {
+  fetchPushNotifications,
+  fetchPushById,
+} from "../services/mysqlService";
 import { sendNotificationToFCM } from "../services/fcmService";
 import { Redis } from "ioredis";
 
@@ -47,7 +50,9 @@ export async function Producer(req: Request, res: Response) {
           priority: value.priority,
           title: value.title,
           body: value.body,
-          image_url: value.image_url,
+          // image_url: value.image_url,
+          image_url:
+            "https://web-api.binge.buzz/uploads/tv_channel_logo/thumbs/6PxdRuTNuTkq9qxtB1ta8XJWfjMb1iBGgH_162x162.webp",
         };
       });
     }
@@ -103,6 +108,7 @@ export async function Consumer(req: Request, res: Response) {
         const message = await getMessageFromQueue(channel);
         console.log("Batch: ", batchNum, " - iteration: ", i);
         if (!message) {
+          console.log("message not found");
           break;
         }
         const messageData = JSON.parse(message.content.toString());
@@ -112,6 +118,9 @@ export async function Consumer(req: Request, res: Response) {
             pushes[messageData.p_id],
             messageData.token
           );
+        } else {
+          // get push info based on push id
+          // fetchPushById
         }
         acknowledgeMessage(channel, message);
       }

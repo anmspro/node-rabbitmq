@@ -18,17 +18,17 @@ export async function sendNotificationToFCM(notification: any, token: string) {
       return;
     }
 
-    // const sampleNotification = {
-    //   title: notification.title,
-    //   body: notification.body,
-    //   image_url: notification.image_url,
-    // };
+    const sampleNotification = {
+      title: notification.title,
+      body: notification.body,
+      image: notification.image_url,
+    };
 
-    console.log("notification ", notification);
-    // console.log("sampleNotification ", sampleNotification);
+    // console.log("notification ", notification);
+    console.log("sampleNotification ", sampleNotification);
     const response = await admin.messaging().send({
-      data: notification,
-      // data: sampleNotification,
+      // data: notification,
+      data: sampleNotification,
       // token: token,
       token:
         "fTojy0jESYaopNrVx_0Rh1:APA91bEkIFUupN3HsvtGiTFLtnUVc0px160kKw_uxbtPcmU1h4aHOPSdZh4im6o8koP3cC8TTfRkkq4pcCaie4I-lALIlMmuoobndNPCsgndhaJTGNGCjSdjz2f9WjXPdDEiSjmv57fO",
