@@ -135,7 +135,11 @@ export async function Consumer(req: Request, res: Response) {
               image_url: value.image_url,
             };
           });
-          console.log(pushes[messageData.p_id]);
+          console.log("message data before sending to fcm: ", messageData);
+          await sendNotificationToFCM(
+            pushes[messageData.p_id],
+            messageData.token
+          );
         }
         acknowledgeMessage(channel, message);
       }
