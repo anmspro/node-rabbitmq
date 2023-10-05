@@ -42,6 +42,7 @@ export async function Producer(req: Request, res: Response) {
       Object.values(pushNotifications).forEach((value) => {
         pushesToSend.push({ p_id: value.id, token });
         pushes[value.id] = {
+          id: value.id.toString(),
           notification_type_id: value.notification_type_id.toString(),
           click_action: value.click_action,
           device_type: value.device_type,
