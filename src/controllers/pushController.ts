@@ -79,13 +79,6 @@ export async function Producer(req: Request, res: Response) {
   }
 }
 
-// todo: store pushes in array (dp)
-// const pushes = [];
-// pushes[1] = {title: "asdfasdf", image: "asdfasdf.png"}
-// if (pushes[1]) {sendpush using this data}
-// or fetch push 1 first
-// book keeping
-
 export async function Consumer(req: Request, res: Response) {
   try {
     const numMessages: number = req.body.numMessages;
@@ -122,6 +115,7 @@ export async function Consumer(req: Request, res: Response) {
         } else {
           const pushNotification = await fetchPushById(messageData.p_id);
           Object.values(pushNotification).forEach((value) => {
+            console.log(value);
             pushes[value.id] = {
               id: value.id.toString(),
               notification_type_id: value.notification_type_id.toString(),
@@ -224,8 +218,6 @@ async function sendMessagesToAllTokens(messageData: any) {
   for (const token of tokens) {
     console.log("Token:", token);
   }
-
-  // await sendNotificationToToken(messageData, token);
 
   console.log("All messages sent.");
 }

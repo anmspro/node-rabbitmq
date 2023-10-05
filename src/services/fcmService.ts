@@ -18,61 +18,56 @@ export async function sendNotificationToFCM(notification: any, token: string) {
       return;
     }
 
-    // const payload = {
-    //   notification: {
-    //     appName: "binge",
-    //     title: notification.title,
-    //     body: notification.body,
-    //     clickAction: notification.click_action ? notification.click_action : "",
-    //     contentType: notification.content_type ? notification.content_type : "",
-    //     contentId: notification.content_id ? notification.content_id : "",
-    //     contentDetail: notification.product
-    //       ? notification.product.content_type.name
-    //       : "",
-    //     maturityLevel: notification.product
-    //       ? notification.product.maturity_level.title
-    //       : "",
-    //     // imageUrl: notification.image_url ? notification.image_url : '',
-    //     // image: `https://web-api.binge.buzz/${notification.image_url}`,
-    //     image: `https://web-api.binge.buzz/uploads/tv_channel_logo/thumbs/6PxdRuTNuTkq9qxtB1ta8XJWfjMb1iBGgH_162x162.webp`,
-    //     // badge: unreadCount ? unreadCount.toString() : '0',
-    //     fcmId: notification.id,
-    //     // notificationTypeId: eachToTry.notification_type_id.toString()
-    //   },
-    // };
-
     const sampleToken =
       "fTojy0jESYaopNrVx_0Rh1:APA91bEkIFUupN3HsvtGiTFLtnUVc0px160kKw_uxbtPcmU1h4aHOPSdZh4im6o8koP3cC8TTfRkkq4pcCaie4I-lALIlMmuoobndNPCsgndhaJTGNGCjSdjz2f9WjXPdDEiSjmv57fO";
 
     const myToken =
       "fZP5yznO8E_mguZcMZHnFx:APA91bHLE4Sj4uzDJIMYZ57dF1jalngp7Gyl1uMZDTJ9DByZ29G8KzuzUA_gO8KCCI6CZ2G_ZoSY9CcsiATtFg8yQwZWKBw4uEK35FE_is_w42NRF3KGO8onDal3lVA2bQCnfzvma8Du";
 
+    const sampleImage =
+      "https://web-api.binge.buzz/uploads/tv_channel_logo/thumbs/6PxdRuTNuTkq9qxtB1ta8XJWfjMb1iBGgH_162x162.webp";
+
     const message = {
       notification: {
         title: notification.title,
         body: notification.body,
         // image: `https://web-api.binge.buzz/${notification.image_url}`,
-        // image: `https://web-api.binge.buzz/uploads/tv_channel_logo/thumbs/6PxdRuTNuTkq9qxtB1ta8XJWfjMb1iBGgH_162x162.webp`,
-        image: `https://web-api.binge.buzz/uploads/products/thumbs/L4XfYvDGhbdf2PjaY2aQDgb20uMCz08K2Y.jpg`,
+        image: sampleImage,
+        appName: "binge",
+        clickAction: notification.click_action ? notification.click_action : "",
+        contentType: notification.content_type ? notification.content_type : "",
+        contentId: notification.content_id ? notification.content_id : "",
+        contentDetail: notification.product
+          ? notification.product.content_type.name
+          : "",
+        maturityLevel: notification.product
+          ? notification.product.maturity_level.title
+          : "",
+        // badge: unreadCount ? unreadCount.toString() : '0',
+        fcmId: notification.id.toString(),
       },
       android: {
         notification: {
-          imageUrl:
-            "https://web-api.binge.buzz/uploads/products/thumbs/L4XfYvDGhbdf2PjaY2aQDgb20uMCz08K2Y.jpg",
+          imageUrl: sampleImage,
         },
       },
       apns: {
         payload: {
           aps: {
-            "mutable-content": 1,
+            alert: {
+              title: notification.title,
+              body: notification.body,
+              image: sampleImage,
+            },
+            sound: "default",
+            mutable_content: 1,
           },
         },
         fcm_options: {
-          image:
-            "https://web-api.binge.buzz/uploads/products/thumbs/L4XfYvDGhbdf2PjaY2aQDgb20uMCz08K2Y.jpg",
+          image: sampleImage,
         },
       },
-      token: sampleToken,
+      token: myToken,
     };
 
     const response = await admin.messaging().send(message);
