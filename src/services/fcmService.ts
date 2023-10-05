@@ -52,12 +52,13 @@ export async function sendNotificationToFCM(notification: any, token: string) {
         title: notification.title,
         body: notification.body,
         // image: `https://web-api.binge.buzz/${notification.image_url}`,
-        image: `https://web-api.binge.buzz/uploads/tv_channel_logo/thumbs/6PxdRuTNuTkq9qxtB1ta8XJWfjMb1iBGgH_162x162.webp`,
+        // image: `https://web-api.binge.buzz/uploads/tv_channel_logo/thumbs/6PxdRuTNuTkq9qxtB1ta8XJWfjMb1iBGgH_162x162.webp`,
+        image: `https://web-api.binge.buzz/uploads/products/thumbs/L4XfYvDGhbdf2PjaY2aQDgb20uMCz08K2Y.jpg`,
       },
       android: {
         notification: {
           imageUrl:
-            "https://web-api.binge.buzz/uploads/tv_channel_logo/thumbs/6PxdRuTNuTkq9qxtB1ta8XJWfjMb1iBGgH_162x162.webp",
+            "https://web-api.binge.buzz/uploads/products/thumbs/L4XfYvDGhbdf2PjaY2aQDgb20uMCz08K2Y.jpg",
         },
       },
       apns: {
@@ -68,11 +69,12 @@ export async function sendNotificationToFCM(notification: any, token: string) {
         },
         fcm_options: {
           image:
-            "https://web-api.binge.buzz/uploads/tv_channel_logo/thumbs/6PxdRuTNuTkq9qxtB1ta8XJWfjMb1iBGgH_162x162.webp",
+            "https://web-api.binge.buzz/uploads/products/thumbs/L4XfYvDGhbdf2PjaY2aQDgb20uMCz08K2Y.jpg",
         },
       },
       token: sampleToken,
     };
+
     const response = await admin.messaging().send(message);
 
     console.log("FCM Response:", response);

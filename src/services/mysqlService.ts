@@ -18,7 +18,8 @@ export async function fetchPushById(p_id: any) {
   try {
     const connection = await mysql.createConnection(dbConfig);
     const [rows] = await connection.query(
-      `SELECT * FROM push_notifications WHERE id=${p_id}`
+      "SELECT * FROM push_notifications WHERE id = ?",
+      [p_id]
     );
     await connection.end();
     return rows;

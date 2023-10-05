@@ -120,8 +120,22 @@ export async function Consumer(req: Request, res: Response) {
             messageData.token
           );
         } else {
-          // get push info based on push id
-          // fetchPushById
+          const pushNotification = await fetchPushById(messageData.p_id);
+          Object.values(pushNotification).forEach((value) => {
+            pushes[value.id] = {
+              id: value.id.toString(),
+              notification_type_id: value.notification_type_id.toString(),
+              click_action: value.click_action,
+              device_type: value.device_type,
+              content_type: value.content_type,
+              content_id: value.content_id.toString(),
+              priority: value.priority,
+              title: value.title,
+              body: value.body,
+              image_url: value.image_url,
+            };
+          });
+          console.log(pushes[messageData.p_id]);
         }
         acknowledgeMessage(channel, message);
       }
@@ -131,7 +145,7 @@ export async function Consumer(req: Request, res: Response) {
       totalMsg -= 1000;
     }
     return res.status(200).json({
-      message: `Received ${numMessages} dummy messages from RabbitMQ.`,
+      message: `Received ${numMessages} messages from RabbitMQ.`,
     });
   } catch (error) {
     console.error("Error getting messages from RabbitMQ:", error);
