@@ -28,19 +28,36 @@ export async function Producer(req: Request, res: Response) {
     const pushNotifications = await fetchPushNotifications();
 
     // Fetch tokens from redis
+    let token: any;
+    const pushesToSend: any = [];
     const redisTokens = await redisClient.smembers("web-staging:token-storage");
-    const tokens = JSON.parse(redisTokens[1]);
 
-    if (!tokens || tokens.length === 0) {
+    if (!redisTokens || redisTokens.length === 0) {
       console.log("No tokens found in Redis.");
       return;
     }
 
-    // design the push notification
-    const pushesToSend: any = [];
-    for (const token of tokens) {
+    for (let i = 0; i < redisTokens.length; i++) {
+      token = JSON.parse(redisTokens[i]);
+
+      let os_type: string;
+      let tokenString: string;
+
+      const colonIndex = token.indexOf(":");
+
+      os_type = token.slice(0, colonIndex);
+      tokenString = token.slice(colonIndex + 1);
+
+      // console.log("os_type: ", os_type);
+      // console.log("tokenString: ", tokenString);
+
       Object.values(pushNotifications).forEach((value) => {
-        pushesToSend.push({ p_id: value.id, token });
+        pushesToSend.push({
+          p_id: value.id,
+          token: tokenString,
+          os_type: os_type,
+        });
+
         pushes[value.id] = {
           id: value.id.toString(),
           notification_type_id: value.notification_type_id.toString(),
