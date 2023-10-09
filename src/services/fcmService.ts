@@ -71,11 +71,15 @@ export async function sendNotificationToFCM(notification: any, token: string) {
       aps: {
         alert: {
           title: notification.title,
+          subtitle: "Subtitle",
           body: notification.body,
           image: sampleImage,
         },
         sound: "default",
         mutable_content: 1,
+        data: {
+          attachmentUrl: sampleImage,
+        },
       },
       imageUrl: notification.image_url ? notification.image_url : "",
       contentType: notification.content_type ? notification.content_type : "",
@@ -92,7 +96,7 @@ export async function sendNotificationToFCM(notification: any, token: string) {
         : "",
     };
     const mess = {
-      token: token,
+      token: myToken,
       notification: {
         title: notification.title,
         body: notification.body,
@@ -101,6 +105,9 @@ export async function sendNotificationToFCM(notification: any, token: string) {
       },
       apns: {
         payload: payload,
+        fcm_options: {
+          image: sampleImage,
+        },
       },
     };
 
