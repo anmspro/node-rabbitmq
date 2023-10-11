@@ -1,4 +1,3 @@
-// mysqlService.ts
 import mysql from "mysql2/promise";
 import dbConfig from "../config/dbConfig";
 

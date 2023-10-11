@@ -1,4 +1,3 @@
-// fcmService.ts
 import admin from "firebase-admin";
 import fcmConfig from "../config/fcmConfig";
 

@@ -1,4 +1,3 @@
-// rabbitMQService.ts
 import amqp from "amqplib";
 import rabbitMQConfig from "../config/rabbitMQConfig";
 

@@ -1,4 +1,3 @@
-// fcmConfig.ts
 export default {
   projectId: "binge-mobile",
   clientEmail: "firebase-adminsdk-uzr71@binge-mobile.iam.gserviceaccount.com",
