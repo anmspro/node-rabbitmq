@@ -29,9 +29,11 @@ export async function sendNotificationToFCM(notification: any, token: string) {
     const myToken =
       "fZP5yznO8E_mguZcMZHnFx:APA91bHLE4Sj4uzDJIMYZ57dF1jalngp7Gyl1uMZDTJ9DByZ29G8KzuzUA_gO8KCCI6CZ2G_ZoSY9CcsiATtFg8yQwZWKBw4uEK35FE_is_w42NRF3KGO8onDal3lVA2bQCnfzvma8Du";
 
-    const sampleImage =
+    const sampleImage162 =
       "https://web-api.binge.buzz/uploads/tv_channel_logo/thumbs/6PxdRuTNuTkq9qxtB1ta8XJWfjMb1iBGgH_162x162.webp";
 
+    const sample400 =
+      "https://web-api.binge.buzz/uploads/products/thumbs/aEIf2zdJHGQuYHMnJpJyUxpR9WnxwlqYiR_400x400.webp";
     // const message = {
     //   notification: {
     //     title: notification.title,
@@ -67,21 +69,40 @@ export async function sendNotificationToFCM(notification: any, token: string) {
 
     // existing solution sample for ios
     const payload = {
+      // "aps": {
+      //   "alert": {
+      //     "title":"Test channel push",
+      //     "body":	"Notifications Test channel push",
+      //   }
+      //   badge = 2;[unread notification count]
+      //   sound = default;
+      //   "mutable-content": 1; (always keep it 1)
+      // }
+      // "imageUrl": "uploads/pushNotification/e0JyN7woPgYwZiM30dsqxSgE8oXC12SSCr.png",
+      // "contentType":"tvChannel",
+      // "pageToNavigate": "tv"/"home"/"sub","vod",
+      // "contentId":"255",
+      // "contentDetail":"",
+      // "maturityLevel":"",
+
       aps: {
         alert: {
           title: notification.title,
-          subtitle: "Subtitle",
+          // subtitle: "Subtitle",
           body: notification.body,
-          image: sampleImage,
+          image: sample400,
         },
+        badge: 2,
         sound: "default",
         mutable_content: 1,
         data: {
-          attachmentUrl: sampleImage,
+          attachmentUrl: sample400,
         },
       },
-      imageUrl: notification.image_url ? notification.image_url : "",
-      contentType: notification.content_type ? notification.content_type : "",
+      imageUrl: sample400,
+      contentType: "tvChannel",
+      // imageUrl: notification.image_url ? notification.image_url : "",
+      // contentType: notification.content_type ? notification.content_type : "",
       clickAction: notification.click_action ? notification.click_action : "",
       pageToNavigate: notification.click_action
         ? notification.click_action
@@ -95,17 +116,18 @@ export async function sendNotificationToFCM(notification: any, token: string) {
         : "",
     };
     const mess = {
-      token: myToken,
+      token:
+        "dlmtg2LnS9SsEhd-B0HijO:APA91bHb0WMdw858oBaHfczBMcAr_aIDn_WSe57ohVgKciAE5FXhgUVFwdzL3kdwIeuD3JLfI8sa0lHna4wUzM-Tgb0gmyrgPbKMsRrHsJCKcZO8pRT-LpY4t-r4a-w5QKlQN_mSUL7v",
       notification: {
         title: notification.title,
         body: notification.body,
         // image: `https://web-api.binge.buzz/${notification.image_url}`,
-        image: sampleImage,
+        image: sample400,
       },
       apns: {
         payload: payload,
         fcm_options: {
-          image: sampleImage,
+          image: sample400,
         },
       },
     };
