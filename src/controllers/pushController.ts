@@ -16,12 +16,6 @@ const pushes: any = {};
 
 export async function Producer(req: Request, res: Response) {
   try {
-    const numMessages: number = req.body.numMessages;
-
-    if (!numMessages || typeof numMessages !== "number" || numMessages <= 0) {
-      return res.status(400).json({ error: "Invalid input" });
-    }
-
     const channel = await createRabbitMQConnection();
 
     // Fetch push notifications from db
@@ -48,9 +42,6 @@ export async function Producer(req: Request, res: Response) {
       os_type = token.slice(0, colonIndex);
       tokenString = token.slice(colonIndex + 1);
 
-      // console.log("os_type: ", os_type);
-      // console.log("tokenString: ", tokenString);
-
       Object.values(pushNotifications).forEach((value) => {
         pushesToSend.push({
           p_id: value.id,
@@ -68,9 +59,7 @@ export async function Producer(req: Request, res: Response) {
           priority: value.priority,
           title: value.title,
           body: value.body,
-          // image_url: value.image_url,
-          image_url:
-            "https://web-api.binge.buzz/uploads/tv_channel_logo/thumbs/6PxdRuTNuTkq9qxtB1ta8XJWfjMb1iBGgH_162x162.webp",
+          image_url: value.image_url,
         };
       });
     }
@@ -206,35 +195,3 @@ process.on("SIGINT", async () => {
   await CloseRedisClient();
   process.exit(0);
 });
-
-async function sendNotificationToToken(
-  messageData: any,
-  registrationToken: string
-) {
-  try {
-    console.log(`Sending message to token: ${registrationToken}`);
-    await sendNotificationToFCM(messageData, registrationToken);
-  } catch (error) {
-    console.error(
-      `Error sending message to token: ${registrationToken}`,
-      error
-    );
-  }
-}
-
-async function sendMessagesToAllTokens(messageData: any) {
-  console.log("entered sendMessagesToAllTokens");
-  const redisTokens = await redisClient.smembers("web-staging:token-storage");
-  const tokens = JSON.parse(redisTokens[1]);
-
-  if (!tokens || tokens.length === 0) {
-    console.log("No tokens found in Redis.");
-    return;
-  }
-
-  for (const token of tokens) {
-    console.log("Token:", token);
-  }
-
-  console.log("All messages sent.");
-}

@@ -5,12 +5,7 @@ export async function createRabbitMQConnection() {
   try {
     const connection = await amqp.connect(rabbitMQConfig.connectionString);
     const channel = await connection.createChannel();
-    await channel.assertQueue(rabbitMQConfig.producerQueue, {
-      durable: true,
-      // arguments: {
-      //   "x-message-ttl": 0,
-      // },
-    });
+    await channel.assertQueue(rabbitMQConfig.producerQueue, { durable: true });
     return channel;
   } catch (error) {
     console.error("Error creating RabbitMQ connection:", error);
